@@ -1,0 +1,29 @@
+Name: harbour-minesweeper
+Summary: MineSweeper
+Version: 0.1
+Release: 1
+Group: Qt/Qt
+URL: http://pastio.org/
+License: CeCILL 2.1
+Sources:
+- '%{name}-%{version}.tar.bz2'
+Description: |
+  This app is a basic minesweeper for SailfishOS
+Configure: none
+Builder: qtc5
+PkgConfigBR:
+- sailfishapp >= 0.0.10
+- Qt5Core
+- Qt5Qml
+- Qt5Quick
+Requires:
+- sailfishsilica-qt5 >= 0.10.9
+Files:
+- /usr/share/icons/hicolor/86x86/apps
+- /usr/share/applications
+- /usr/share/harbour-minesweeper
+- /usr/bin
+- '%{_datadir}/icons/hicolor/86x86/apps/%{name}.png'
+- '%{_datadir}/applications/%{name}.desktop'
+- '%{_datadir}/%{name}/qml'
+- '%{_bindir}'
