@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import QtQuick.LocalStorage 2.0
 import Sailfish.Silica 1.0
+import "LocalStorage.js" as LocalStorage
 
 Page {
     id: page
@@ -14,13 +15,30 @@ Page {
         }
     ]
 
+    function newGame(x,y,m){
+        if(counter.isGameOn()){
+            mineField.playedGames++;
+            LocalStorage.saveHighScore(mineField)
+        }
+        mainLabel.text=""
+        subLabel.text =""
+        mineField.columns=x;
+        mineField.preferredRows=y;
+        mineField.mineNumber = m;
+        page.state = "";
+        pum.highlightColor = "#FDD017"
+        mineField.renewBoard()
+        counter.resetCounter(mineField)
+        LocalStorage.getHighScore(mineField);
+    }
+
     SilicaFlickable {
 
         anchors.fill: parent
 
         id: flickable
         
-        contentHeight: column.height
+        contentHeight: mainColumn.height
 
         PullDownMenu {
             id:pdm
@@ -28,90 +46,59 @@ Page {
             MenuItem {
                 text: qsTr("About")
                 onClicked:{
-                    counter.pauseCounter();
-                    var about = pageStack.push("About.qml")
-                    about.onStatusChanged.connect(function() {
-                        if(about.status === PageStatus.Inactive)
-                            counter.unpauseCounter();
-                    })
+                    pageStack.push("About.qml")
+                }
+            }
+
+            MenuItem {
+                text: qsTr("Highscores")
+                onClicked:{
+                    pageStack.push("Highscores.qml")
                 }
             }
 
             MenuItem {
                 text: qsTr("New Hard")
                 onClicked:{
-                    mainLabel.text=""
-                    subLabel.text =""
-                    mineField.columns=12;
-                    mineField.preferredRows=20;
-                    mineField.mineNumber = 30;
-                    page.state = "";
-                    pum.highlightColor = "#FDD017"
-                    mineField.renewBoard()
-                    counter.resetCounter(mineField)
+                    newGame(12,20,30);
                 }
             }
             MenuItem {
                 text: qsTr("New Easy")
                 onClicked:{
-                    mainLabel.text=""
-                    subLabel.text =""
-                    mineField.columns=6;
-                    mineField.preferredRows=10;
-                    mineField.mineNumber = 10;
-                    page.state = "";
-                    pum.highlightColor = "#FDD017"
-                    mineField.renewBoard()
-                    counter.resetCounter(mineField)
+                    newGame(6,10,10);
                 }
             }
         }
 
         ViewPlaceholder {
             enabled: mineField.children.length === 0
-            text: qsTr("Pull down to create a new game
-
-
-
-Push up to switch between Flag an Dig")
+            text: qsTr("Pull down to create a new game\n\n\n\nPush up to switch between Flag an Dig")
 
             hintText:qsTr("The pushup menu color tells you about the mode you're in")
         }
 
-
-        Column{
-            anchors.centerIn: parent
-            Label{
-                width: page.width
-                id:mainLabel
-                horizontalAlignment: Text.AlignHCenter
-                font.pixelSize: Theme.fontSizeHuge
-                color: Theme.primaryColor
-                text:""
-            }
-
-            Label{
-                width: page.width
-                id:subLabel
-                horizontalAlignment: Text.AlignHCenter
-                font.pixelSize: Theme.fontSizeLarge
-                color: Theme.primaryColor
-                text:""
-            }
-        }
-
         Column {
-            id:column
+            id:mainColumn
             width: page.width
             anchors.centerIn: parent.center
-
 
             Counter {
                 id:counter
                 opacity:0;
                 onWon:{
                     mainLabel.text=qsTr("You Win");
-                    console.log("won")
+                    mineField.wonGames++;
+                    mineField.playedGames++;
+                    if(counter.time < mineField.bestTime){
+                        subLabel.text = qsTr("New Time Record !!")+"\n";
+                        mineField.bestTime = counter.time
+                    }
+
+                    var percentVictory = ((mineField.wonGames/mineField.playedGames)*100).toFixed(2)
+                    subLabel.text += qsTr("%1% of victory in this difficulty").arg(percentVictory);
+
+                    LocalStorage.saveHighScore(mineField)
                 }
             }
 
@@ -132,20 +119,48 @@ Push up to switch between Flag an Dig")
                 onExploded:{
                     counter.stopCounter()
                     if(mainLabel.text === ""){
-                        mainLabel.text=qsTr("You Loose");
+                        mainLabel.text=qsTr("You Lose");
+                        mineField.playedGames++;
+                        LocalStorage.saveHighScore(mineField)
+
+                        var percentVictory = ((mineField.wonGames/mineField.playedGames)*100).toFixed(2)
+                        subLabel.text = qsTr("%1% of victory in this difficulty").arg(percentVictory);
+
                     }else{
-                        mainLabel.text=qsTr("You Loose");
-                        subLabel.text = qsTr("and it's quite stupid
-because you were winning");
+                        mainLabel.text=qsTr("You Lose");
+                        subLabel.text = qsTr("and it's quite stupid\nbecause you were winning.");
+                        mineField.wonGames--;
+                        LocalStorage.saveHighScore(mineField)
                     }
                 }
+            }
+        }
+
+        Column{
+            id:messages
+            anchors.centerIn: parent
+            Label{
+                width: page.width
+                id:mainLabel
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Theme.fontSizeHuge
+                color: Theme.primaryColor
+                text:""
+            }
+
+            Label{
+                width: page.width
+                id:subLabel
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Theme.fontSizeLarge
+                color: Theme.primaryColor
+                text:""
             }
         }
 
         PushUpMenu{
             id:pum
             highlightColor:"#FDD017"
-
 
             MenuItem {
                 id:pummi
@@ -164,6 +179,30 @@ because you were winning");
             }
 
         }
+    }
+
+    onStatusChanged: {
+        if(page.status === PageStatus.Active)
+            counter.unpauseCounter();
+        else
+            counter.pauseCounter();
+    }
+
+    Connections {
+          target: app
+          onApplicationActiveChanged: {
+              if(applicationActive)
+                  counter.unpauseCounter();
+              else
+                  counter.pauseCounter();
+          }
+
+          Component.onDestruction: {
+              if(counter.isGameOn()){
+                  mineField.playedGames++;
+                  LocalStorage.saveHighScore(mineField)
+              }
+          }
     }
 }
 

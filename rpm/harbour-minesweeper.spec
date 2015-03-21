@@ -13,7 +13,7 @@ Name:       harbour-minesweeper
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    MineSweeper
-Version:    0.1
+Version:    0.2
 Release:    1
 Group:      Qt/Qt
 License:    CeCILL 2.1

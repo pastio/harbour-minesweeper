@@ -3,8 +3,6 @@ import Sailfish.Silica 1.0
 
 Item {
 
-    id:counter
-
     width:parent.width
     height: Theme.fontSizeLarge + 3*Theme.paddingSmall
 
@@ -12,6 +10,8 @@ Item {
     property int remainingToOpen
     property int flaggedMines;
     property int totalMines;
+
+    property bool paused:false;
 
     signal won
 
@@ -25,9 +25,9 @@ Item {
 
     Label {
         id:timer
-
-
-        text:(("0" + parseInt(time/600)).substr(-2)) + ":" + (("0" + parseInt(time/10)%60).substr(-2)) + ":" + time%10;
+        text:time < 36000 ?
+                 (("0" + parseInt(time/600)).substr(-2)) + ":" + (("0" + parseInt(time/10)%60).substr(-2)) + "." + time%10
+               : qsTr("> 1 hour");
         anchors.left: parent.left;
         anchors.leftMargin: Theme.paddingLarge
         anchors.bottom: parent.bottom
@@ -71,18 +71,29 @@ Item {
         flaggedMines = 0;
         totalMines = mineField.mineNumber
         opacity=1;
+        paused = false
+        gameTimer.stop()
     }
 
     function startCounter(){
+        paused = false
         gameTimer.restart()
     }
 
     function pauseCounter(){
-        gameTimer.stop()
+        if(counter.time > 0){
+            paused = true;
+            console.log("pausingCounter");
+            gameTimer.stop()
+        }
     }
 
     function unpauseCounter(){
-        gameTimer.start()
+        if(paused){
+            paused = false
+            console.log("unpausingCounter");
+            gameTimer.start()
+        }
     }
 
     function stopCounter(){
@@ -99,5 +110,12 @@ Item {
 
     function oneUnflagged(){
         flaggedMines--
+    }
+
+    function isGameOn(){
+        if(counter.time>0){
+            return true
+        }
+        return false
     }
 }
