@@ -6,6 +6,11 @@ import "LocalStorage.js" as LocalStorage
 Page {
     id: page
 
+
+    property int wonGames : 0;
+    property int playedGames : 0;
+    property int bestTime : 36000;
+
     states: [
         State {
             name: ""
@@ -16,9 +21,10 @@ Page {
     ]
 
     function newGame(x,y,m){
-        if(counter.isGameOn()){
+        if(counter.isGameRunning()){
             mineField.playedGames++;
-            LocalStorage.saveHighScore(mineField)
+            console.log("mp:newgame");
+            LocalStorage.saveHighScore(page, mineField)
         }
         mainLabel.text=""
         subLabel.text =""
@@ -29,7 +35,9 @@ Page {
         pum.highlightColor = "#FDD017"
         mineField.renewBoard()
         counter.resetCounter(mineField)
-        LocalStorage.getHighScore(mineField);
+
+        console.log("mp:newgame");
+        LocalStorage.getHighScore(page, mineField);
     }
 
     SilicaFlickable {
@@ -61,12 +69,14 @@ Page {
                 text: qsTr("New Hard")
                 onClicked:{
                     newGame(12,20,30);
+                    //newGame(3,4,2);
                 }
             }
             MenuItem {
                 text: qsTr("New Easy")
                 onClicked:{
                     newGame(6,10,10);
+                    //newGame(4,3,1);
                 }
             }
         }
@@ -88,17 +98,40 @@ Page {
                 opacity:0;
                 onWon:{
                     mainLabel.text=qsTr("You Win");
-                    mineField.wonGames++;
-                    mineField.playedGames++;
-                    if(counter.time < mineField.bestTime){
+                    wonGames++;
+                    playedGames++;
+
+                    if(counter.time < bestTime){
                         subLabel.text = qsTr("New Time Record !!")+"\n";
-                        mineField.bestTime = counter.time
+                        bestTime = counter.time
                     }
 
-                    var percentVictory = ((mineField.wonGames/mineField.playedGames)*100).toFixed(2)
+                    var percentVictory = ((wonGames/playedGames)*100).toFixed(2)
                     subLabel.text += qsTr("%1% of victory in this difficulty").arg(percentVictory);
 
-                    LocalStorage.saveHighScore(mineField)
+                    console.log("mp:counter:onwon");
+                    LocalStorage.saveHighScore(page, mineField)
+                }
+
+                onLost: {
+                    if(mainLabel.text === ""){
+                        mainLabel.text=qsTr("You Lose");
+                        playedGames++;
+
+                        var percentVictory = ((wonGames/playedGames)*100).toFixed(2)
+                        subLabel.text = qsTr("%1% of victory in this difficulty").arg(percentVictory);
+
+                        console.log("mp:counter:onlost");
+                        LocalStorage.saveHighScore(page, mineField)
+                    }
+
+                    else{
+                        mainLabel.text=qsTr("You Lose");
+                        subLabel.text = qsTr("and it's quite stupid\nbecause you were winning.");
+                        wonGames--;
+                        console.log("mp:mf:onexploded (apres victoire)");
+                        LocalStorage.saveHighScore(page, mineField)
+                    }
                 }
             }
 
@@ -114,24 +147,10 @@ Page {
                     counter.oneUnflagged()
                 }
                 onStarted:{
-                    counter.startCounter()
+                    counter.startGame()
                 }
                 onExploded:{
-                    counter.stopCounter()
-                    if(mainLabel.text === ""){
-                        mainLabel.text=qsTr("You Lose");
-                        mineField.playedGames++;
-                        LocalStorage.saveHighScore(mineField)
-
-                        var percentVictory = ((mineField.wonGames/mineField.playedGames)*100).toFixed(2)
-                        subLabel.text = qsTr("%1% of victory in this difficulty").arg(percentVictory);
-
-                    }else{
-                        mainLabel.text=qsTr("You Lose");
-                        subLabel.text = qsTr("and it's quite stupid\nbecause you were winning.");
-                        mineField.wonGames--;
-                        LocalStorage.saveHighScore(mineField)
-                    }
+                    counter.stopGame(false);
                 }
             }
         }
@@ -198,9 +217,8 @@ Page {
           }
 
           Component.onDestruction: {
-              if(counter.isGameOn()){
-                  mineField.playedGames++;
-                  LocalStorage.saveHighScore(mineField)
+              if(counter.isGameRunning()){
+                  counter.stopGame(false);
               }
           }
     }

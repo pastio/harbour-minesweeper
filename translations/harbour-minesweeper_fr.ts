@@ -40,11 +40,36 @@
     </message>
 </context>
 <context>
+    <name>CoverPage</name>
+    <message>
+        <source>Minesweeper</source>
+        <translation>Démineur</translation>
+    </message>
+</context>
+<context>
     <name>Highscores</name>
     <message>
         <source>HighScores</source>
         <translation>Meilleurs scores</translation>
     </message>
+    <message>
+        <source>Reset High Scores</source>
+        <translation>Effacer les scores</translation>
+    </message>
+    <message>
+        <source>Resetting</source>
+        <translation>Effacement</translation>
+    </message>
+</context>
+<context>
+    <name>License</name>
+    <message>
+        <source>License</source>
+        <translation>Licence</translation>
+    </message>
+</context>
+<context>
+    <name>LocalStorage</name>
     <message>
         <source>Game of size %1x%2 with %3 mines</source>
         <translation>Plateau de taille %1x%2 doté de %3 mines</translation>
@@ -52,6 +77,10 @@
     <message>
         <source> - %1 game played</source>
         <translation> - %1 parties jouées</translation>
+    </message>
+    <message>
+        <source> - No game played yet</source>
+        <translation> - Pas encore de partie jouée</translation>
     </message>
     <message>
         <source> - %1% of victory in this difficulty</source>
@@ -69,17 +98,6 @@ vous semblez être incapable de gagner</translation>
     <message>
         <source>no highscore yet</source>
         <translation> - Pas encore de meilleur score</translation>
-    </message>
-    <message>
-        <source> - No game played yet</source>
-        <translation> - Pas encore de partie jouée</translation>
-    </message>
-</context>
-<context>
-    <name>License</name>
-    <message>
-        <source>License</source>
-        <translation>Licence</translation>
     </message>
 </context>
 <context>
@@ -129,12 +147,6 @@ Push up to switch between Flag an Dig</source>
 Poussez pour basculer entre creuser et marquer</translation>
     </message>
     <message>
-        <source>and it&apos;s quite stupid
-because you were winning.</source>
-        <translation>et c&apos;est tout à fait idiot,
-vous aviez gagné.</translation>
-    </message>
-    <message>
         <source>Highscores</source>
         <translation>Meilleurs scores</translation>
     </message>
@@ -145,6 +157,12 @@ vous aviez gagné.</translation>
     <message>
         <source>%1% of victory in this difficulty</source>
         <translation>%1% de victoire dans ce mode</translation>
+    </message>
+    <message>
+        <source>and it&apos;s quite stupid
+because you were winning.</source>
+        <translation>Et c&apos;est idiot,
+car vous aviez gagné</translation>
     </message>
 </context>
 </TS>

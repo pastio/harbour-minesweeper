@@ -8,39 +8,133 @@
 // | 12x20x30 | 12  |  23   |  9006 |
 // +----------+-----+-------+-------+
 
-function getHighScore(mineField)
-{
+var db = "";
+
+function openDb(){
+    // Offline storage
+    console.log("openDB");
+
     var db = Sql.LocalStorage.openDatabaseSync(
         "harbour-minesweeper",
         "0.2",
         "harbour-minesweeper Local Data",
         100
     );
+}
+
+function resetDb(){
+
+    var db = Sql.LocalStorage.openDatabaseSync(
+        "harbour-minesweeper",
+        "0.2",
+        "harbour-minesweeper Local Data",
+        100
+    );
+
+    db.transaction(
+        function(tx) {
+            tx.executeSql('DROP TABLE Scores');
+        }
+    );
+
+}
+
+function printHighScore()
+{
+    console.log("printHighScore");
+
+    var retour ="";
+
+
+    var db = Sql.LocalStorage.openDatabaseSync(
+        "harbour-minesweeper",
+        "0.2",
+        "harbour-minesweeper Local Data",
+        100
+    );
+
+    db.transaction(
+        function(tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS Scores(mode TEXT PRIMARY KEY, won NUMBER, total NUMBER, time NUMBER)');
+            // Only show results for the current grid size
+            var rs = tx.executeSql('SELECT * FROM Scores');
+            if (rs.rows.length > 0){
+                for (var i = 0; i < rs.rows.length; i++) {
+
+                    var mode = rs.rows.item(i).mode
+                    var modes = mode.split("x")
+                    retour += qsTr("Game of size %1x%2 with %3 mines").arg(modes[0]).arg(modes[1]).arg(modes[2]) +"\n";
+
+                    retour += qsTr(" - %1 game played").arg(rs.rows.item(i).total) +"\n";
+
+                    var total = rs.rows.item(i).total;
+                    if(total === 0){
+                        retour += qsTr(" - No game played yet")+"\n";
+                    }else{
+                        var percentVictory = ((rs.rows.item(i).won/total)*100).toFixed(2)
+                        retour += qsTr(" - %1% of victory in this difficulty").arg(percentVictory) +"\n";
+                    }
+
+                    var bestTime = rs.rows.item(i).time;
+                    if(bestTime === 36000){
+                        retour += qsTr(" - No best time yet")+"\n\n";
+                    }else{
+                        var bestTimeStr = (("0" + parseInt(bestTime/600)).substr(-2)) + ":" + (("0" + parseInt(bestTime/10)%60).substr(-2)) + "." + bestTime%10;
+                        retour += qsTr(" - Best time of %1").arg(bestTimeStr) + "\n\n";
+                    }
+                }
+            }
+            else{
+                retour = qsTr("no highscore yet");
+            }
+        }
+    );
+
+    return retour;
+}
+
+function getHighScore(page, minefield)
+{
+
+    var db = Sql.LocalStorage.openDatabaseSync(
+        "harbour-minesweeper",
+        "0.2",
+        "harbour-minesweeper Local Data",
+        100
+    );
+
     db.transaction(
         function(tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS Scores(mode TEXT PRIMARY KEY, won NUMBER, total NUMBER, time NUMBER)');
             // Only show results for the current grid size
 
             var rs = tx.executeSql('SELECT * FROM Scores WHERE mode = "' +
-                                   mineField.columns +'x'+
-                                   mineField.preferredRows +'x'+
-                                   mineField.mineNumber + '"');
+                                   minefield.columns +'x'+
+                                   minefield.preferredRows +'x'+
+                                   minefield.mineNumber + '"');
             if (rs.rows.length === 1){
-                mineField.wonGames = rs.rows.item(0).won;
-                mineField.playedGames = rs.rows.item(0).total;
-                mineField.bestTime = rs.rows.item(0).time;
+                page.wonGames = rs.rows.item(0).won;
+                page.playedGames = rs.rows.item(0).total;
+                page.bestTime = rs.rows.item(0).time;
             }else{
-                mineField.wonGames = 0;
-                mineField.playedGames = 0;
-                mineField.bestTime = 36000;
+                page.wonGames = 0;
+                page.playedGames = 0;
+                page.bestTime = 36000;
             }
         }
     );
+    console.log("getHighScore " +page.wonGames + " " + page.playedGames + " " + page.bestTime);
+
+//    console.log("######################################");
+//    console.log("getHighScore");
+//    debugPrintDB(mineField);
+//    console.log("######################################");
 }
 
-function saveHighScore(mineField)
+function saveHighScore(page, minefield)
 {
-    // Offline storage
+    console.log("saveHighScore " +page.wonGames + " " + page.playedGames + " " + page.bestTime);
+
     var db = Sql.LocalStorage.openDatabaseSync(
         "harbour-minesweeper",
         "0.2",
@@ -53,61 +147,63 @@ function saveHighScore(mineField)
             tx.executeSql('CREATE TABLE IF NOT EXISTS Scores(mode TEXT PRIMARY KEY, won NUMBER, total NUMBER, time NUMBER)');
 
             var rs = tx.executeSql('SELECT * FROM Scores WHERE mode = "'
-                                   + mineField.columns +'x'+ mineField.preferredRows +'x'+ mineField.mineNumber + '"');
+                                   + minefield.columns +'x'
+                                   + minefield.preferredRows +'x'
+                                   + minefield.mineNumber + '"');
             if (rs.rows.length === 0){
                 var dataInsert = [
-                            mineField.columns +'x'+mineField.preferredRows +'x'+mineField.mineNumber,
-                            mineField.wonGames,
-                            mineField.playedGames,
-                            mineField.bestTime
+                            minefield.columns +'x'+minefield.preferredRows +'x'+minefield.mineNumber,
+                            page.wonGames,
+                            page.playedGames,
+                            page.bestTime
                 ];
                 tx.executeSql("INSERT INTO Scores VALUES(?, ?, ?, ?)", dataInsert);
             }else{
                 var dataUpdate = [
-                            mineField.wonGames,
-                            mineField.playedGames,
-                            mineField.bestTime,
-                            mineField.columns +'x'+mineField.preferredRows +'x'+mineField.mineNumber
+                            page.wonGames,
+                            page.playedGames,
+                            page.bestTime,
+                            minefield.columns +'x'+minefield.preferredRows +'x'+minefield.mineNumber
                 ];
                 tx.executeSql("UPDATE Scores SET won=?, total=?, time=? WHERE mode=?", dataUpdate);
             }
         }
     );
+
+//    console.log("######################################");
+//    console.log("saveHighScore");
+//    debugPrintDB(mineField);
+//    console.log("######################################");
 }
 
-function debugPrintDB(mineField)
-{
-    // Offline storage
-    var db = Sql.LocalStorage.openDatabaseSync(
-        "harbour-minesweeper",
-        "0.2",
-        "harbour-minesweeper Local Data",
-        100
-    );
+//function debugPrintDB(mineField)
+//{
 
-    db.transaction(
-        function(tx) {
-            tx.executeSql('CREATE TABLE IF NOT EXISTS Scores(mode TEXT PRIMARY KEY, won NUMBER, total NUMBER, time NUMBER)');
-            // Only show results for the current grid size
+//    var db = Sql.LocalStorage.openDatabaseSync(
+//        "harbour-minesweeper",
+//        "0.2",
+//        "harbour-minesweeper Local Data",
+//        100
+//    );
 
-            console.log("##########################################")
-            console.log(" mode | won | total |  time ")
-            console.log(" --------------------------- ")
-            console.log(" "+mineField.columns +'x'+mineField.preferredRows +'x'+mineField.mineNumber+" | " +
-                        mineField.wonGames+" | " +
-                        mineField.playedGames+" | " +
-                        mineField.bestTime)
-            console.log(" --------------------------- ")
-            var rs = tx.executeSql('SELECT * FROM Scores');
-            if (rs.rows.length > 0){
-                for (var i = 0; i < rs.rows.length; i++) {
-                    console.log(rs.rows.item(i).mode + " | " + rs.rows.item(i).won + " | " + rs.rows.item(i).total + " | " + rs.rows.item(i).time);
-                }
-            }
-            else{
-                console.log("no entries")
-            }
-        }
-    );
-}
+//    db.transaction(
+//        function(tx) {
+//            tx.executeSql('CREATE TABLE IF NOT EXISTS Scores(mode TEXT PRIMARY KEY, won NUMBER, total NUMBER, time NUMBER)');
+//            // Only show results for the current grid size
+
+//            console.log("##########################################")
+//            console.log(" mode | won | total |  time ")
+//            console.log(" --------------------------- ")
+//            var rs = tx.executeSql('SELECT * FROM Scores');
+//            if (rs.rows.length > 0){
+//                for (var i = 0; i < rs.rows.length; i++) {
+//                    console.log(rs.rows.item(i).mode + " | " + rs.rows.item(i).won + " | " + rs.rows.item(i).total + " | " + rs.rows.item(i).time);
+//                }
+//            }
+//            else{
+//                console.log("no entries")
+//            }
+//        }
+//    );
+//}
 

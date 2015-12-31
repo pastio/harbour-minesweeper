@@ -11,17 +11,17 @@ Item {
     property int flaggedMines;
     property int totalMines;
 
-    property bool paused:false;
+    property bool gamePaused:false;
+    property bool gameRunning:false;
 
     signal won
+    signal lost
 
     onRemainingToOpenChanged: {
         if(remainingToOpen === 0){
-            stopCounter();
-            won();
+            stopGame(true);
         }
     }
-
 
     Label {
         id:timer
@@ -71,33 +71,39 @@ Item {
         flaggedMines = 0;
         totalMines = mineField.mineNumber
         opacity=1;
-        paused = false
-        gameTimer.stop()
     }
 
-    function startCounter(){
-        paused = false
+    function startGame(){
+        gamePaused = false;
+        gameRunning= true;
         gameTimer.restart()
     }
 
     function pauseCounter(){
-        if(counter.time > 0){
-            paused = true;
+        if(gameRunning && !gamePaused){
+            gamePaused = true;
             console.log("pausingCounter");
             gameTimer.stop()
         }
     }
 
     function unpauseCounter(){
-        if(paused){
-            paused = false
+        if(gamePaused && gameRunning){
+            gamePaused = false
             console.log("unpausingCounter");
             gameTimer.start()
         }
     }
 
-    function stopCounter(){
+    function stopGame(isGameWon){
+        gamePaused = false;
+        gameRunning = false;
         gameTimer.stop()
+        if(isGameWon){
+            won();
+        }else{
+            lost();
+        }
     }
 
     function oneOpened(){
@@ -112,10 +118,7 @@ Item {
         flaggedMines--
     }
 
-    function isGameOn(){
-        if(counter.time>0){
-            return true
-        }
-        return false
+    function isGameRunning(){
+        return gameRunning;
     }
 }

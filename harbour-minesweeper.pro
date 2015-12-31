@@ -43,6 +43,8 @@ OTHER_FILES += \
     qml/pages/LocalStorage.js \
     qml/pages/Highscores.qml
 
+SAILFISHAPP_ICONS = 86x86 108x108 128x128 256x256
+
 RESOURCES += \
     ressources.qrc
 

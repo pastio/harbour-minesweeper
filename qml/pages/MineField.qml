@@ -19,10 +19,6 @@ Grid {
     property int preferredRows
     property int mineNumber
 
-    property int wonGames : 0;
-    property int playedGames : 0;
-    property int bestTime : 36000;
-
     function closeMines() {
         for(var i = 0; i < thisMineField.children.length; i++) {
             thisMineField.children[i].state="";
